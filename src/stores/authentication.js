@@ -16,10 +16,14 @@ export const useAuthenticationStore = defineStore(
 
         const setSignedUser = signedUser => {
             state.isSigned = true;
-            //state.signedUser = signedUser                       
-            state.signedUser.userId = signedUser.signedUserId;
-            state.signedUser.nickName = signedUser.nm;
-            state.signedUser.pic = signedUser.pic;
+            //state.signedUser = signedUser     
+            const user = {
+                userId: signedUser.signedUserId,
+                nickName: signedUser.nm,
+                pic: signedUser.pic
+
+            }                  
+            state.signedUser = user;
         }
 
         const setSigndUserPic = pic => {
