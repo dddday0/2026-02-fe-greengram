@@ -13,6 +13,8 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/scrollbar';
 
+const baseUrl = ref(import.meta.env.VITE_BASE_URL);
+
 const authenticationStore = useAuthenticationStore();
 
 const props = defineProps({
@@ -75,16 +77,14 @@ state.likeCount = state.isLike ? state.likeCount + 1 : state.likeCount - 1;
         </router-link>
     </div>
     <div>{{ props.item.location }}</div>
-    </div>
+    </div>            
     <div
     v-if="
         props.ynDel &&
-        props.item.writerUserId === authenticationStore.state.signedUser.userId
+        props.item.writerUserId == authenticationStore.state.signedUser.userId
     ">
-    <div className="d-flex flex-column justify-content-center">
-        <i
-        className="fa fa-trash pointer color-red"
-        @click="$emit('onDeleteFeed')"></i>
+    <div class="d-flex flex-column justify-content-center">
+        <font-awesome-icon icon="fa fa-trash" class="pointer color-red" @click="$emit('onDeleteFeed')" />
     </div>
     </div>
 </div>
