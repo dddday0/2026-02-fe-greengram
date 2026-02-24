@@ -42,10 +42,12 @@ likeCount: props.item.likeCount,
 });
 
 const toggleLike = async () => {
+    console.log("props.item 전체:", props.item);
+    console.log("보내려는 feedId 값:", props.item.feedId);
 const data = { feedId: props.item.feedId };
 const res = await toggleFeedLike(data);
 if (res.status === 200) {
-state.isLike = res.data.result;
+state.isLike = res.data.resultData;
 state.likeCount = state.isLike ? state.likeCount + 1 : state.likeCount - 1;
 }
 };
@@ -107,11 +109,8 @@ state.likeCount = state.isLike ? state.likeCount + 1 : state.likeCount - 1;
     </swiper-slide>
 </swiper>
 <div class="favCont p-2 d-flex flex-row">
-    <i
-    :class="`${
-        state.isLike ? 'fas' : 'far'
-    } fa-heart pointer rem1_2 me-3 color-red`"
-    @click="toggleLike"></i>
+    <font-awesome-icon :icon="`${state.isLike ? 'fas' : 'far'} fa-heart`"
+    class="pointer rem1_2 me-3 color-red" @click="toggleLike"/>
     <span>{{ state.likeCount }}</span>
 </div>
 <div class="itemCtnt p-2" v-if="props.item.contents">
