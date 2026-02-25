@@ -28,7 +28,7 @@ pics: Array,
 contents: String,
 isLike: Boolean,
 likeCount: Number,
-comment: Object,
+commentCount: Number,
 },
 ynDel: Boolean,
 onDeleteFeed: Function,
@@ -38,12 +38,10 @@ const state = reactive({
 modules: [Navigation, Pagination, Scrollbar, A11y],
 isLike: props.item.isLike,
 pagination: props.item.pics.length <= 5 ? { clickable: true } : null,
-likeCount: props.item.likeCount,
+likeCount: props.item.likeCount
 });
 
 const toggleLike = async () => {
-    console.log("props.item 전체:", props.item);
-    console.log("보내려는 feedId 값:", props.item.feedId);
 const data = { feedId: props.item.feedId };
 const res = await toggleFeedLike(data);
 if (res.status === 200) {
@@ -83,7 +81,7 @@ state.likeCount = state.isLike ? state.likeCount + 1 : state.likeCount - 1;
     <div
     v-if="
         props.ynDel &&
-        props.item.writerUserId == authenticationStore.state.signedUser.userId
+        props.item.writerUserId === authenticationStore.state.signedUser.userId
     ">
     <div class="d-flex flex-column justify-content-center">
         <font-awesome-icon icon="fa fa-trash" class="pointer color-red" @click="$emit('onDeleteFeed')" />
@@ -109,9 +107,16 @@ state.likeCount = state.isLike ? state.likeCount + 1 : state.likeCount - 1;
     </swiper-slide>
 </swiper>
 <div class="favCont p-2 d-flex flex-row">
-    <font-awesome-icon :icon="`${state.isLike ? 'fas' : 'far'} fa-heart`"
-    class="pointer rem1_2 me-3 color-red" @click="toggleLike"/>
+    <div style="margin-right: 20px;">
+    <font-awesome-icon :icon="`${state.isLike ? 'fas' : 'far'} fa-heart`" 
+    class="pointer rem1_2 me-3 color-red" @click="toggleLike" />
     <span>{{ state.likeCount }}</span>
+    </div>
+
+    <div>
+    <font-awesome-icon icon="fa-regular fa-comment" class="pointer rem1_2 me-3" />
+    <span>{{ props.item.commentCount }}</span>
+    </div>
 </div>
 <div class="itemCtnt p-2" v-if="props.item.contents">
     {{ props.item.contents }}
