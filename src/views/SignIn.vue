@@ -2,7 +2,7 @@
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { signIn } from '@/services/userService';
-import { useAuthenticationStore } from '@/stores/authentication';
+import { useAuthenticationStore } from '@/stores/authentication'; //pinia 상태관리
 import { checkValidation } from '@/utils/validation';
 
 const router = useRouter();
