@@ -1,14 +1,15 @@
 <script setup>
 import HeaderComponent from './components/HeaderComponent.vue';
 import loadingImg from '@/assets/loading.gif';
-import { ref, reactive, watch , nextTick } from 'vue';
+import FeedCommentCard from './components/FeedCommentCard.vue';
+import { useCommentModalStore } from './stores/commentModal';
+import { ref, reactive, watch, nextTick } from 'vue';
 import { useMessageModalStore } from './stores/messageModal';
 import { useAuthenticationStore } from './stores/authentication';
 import { useFeedStore } from './stores/feed';
 import { postFeed } from './services/feedService';
-import { useCommentModalStore } from './stores/commentModal';
-import FeedCommentCard from './components/FeedCommentCard.vue';
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll';
+import { getCurrentTimestamp } from './utils/commonUtils';
 
 const modalCloseButton = ref(null);
 const commentListContainer = ref(null);
@@ -19,98 +20,85 @@ const feedStore = useFeedStore();
 const commentModalStore = useCommentModalStore();
 
 const state = reactive({
-feed: {
-location: '',
-contents: '',
-pics: []
-},
-previewPics: []
+    feed: {
+        location: '',
+        contents: '',
+        pics: []
+    },
+    previewPics: []
 });
 
 const handlePicChanged = e => {
-for(let i=0; i<e.target.files.length; i++) {
-    const pic = e.target.files[i];
-    state.feed.pics.push(pic);
-    state.previewPics.push(URL.createObjectURL(pic));
-}    
+    for(let i=0; i<e.target.files.length; i++) {
+        const pic = e.target.files[i];
+        state.feed.pics.push(pic);
+        state.previewPics.push(URL.createObjectURL(pic));
+    }    
 }
 
 const deletePreviewPic = idx => {
-state.feed.pics.splice(idx, 1);
-state.previewPics.splice(idx, 1);
+    state.feed.pics.splice(idx, 1);
+    state.previewPics.splice(idx, 1);
 }
 
 const saveFeed = async () => {
-console.log('state.feed.pics: ', state.feed.pics);
-const MAX_PIC_COUNT = 10;
-//사진 있는지 확인    
-if(state.feed.pics.length === 0) { 
-    alert('사진을 선택해 주세요.');
-    return;
-} else if(state.feed.pics.length > MAX_PIC_COUNT) {
-    alert(`사진은 ${MAX_PIC_COUNT}장까지 선택 가능합니다.`);
-    return;
-}
+    console.log('state.feed.pics: ', state.feed.pics);
+    const MAX_PIC_COUNT = 10;
+    //사진 있는지 확인    
+    if(state.feed.pics.length === 0) { 
+        alert('사진을 선택해 주세요.');
+        return;
+    } else if(state.feed.pics.length > MAX_PIC_COUNT) {
+        alert(`사진은 ${MAX_PIC_COUNT}장까지 선택 가능합니다.`);
+        return;
+    }
 
-const params = {
-    contents: state.feed.contents.length === 0 ? null : state.feed.contents,
-    location: state.feed.location.length === 0 ? null : state.feed.location
-}
+    const params = {
+        contents: state.feed.contents.length === 0 ? null : state.feed.contents,
+        location: state.feed.location.length === 0 ? null : state.feed.location
+    }
 
-const formData = new FormData();
-formData.append('req', new Blob([JSON.stringify(params)], { type: 'application/json' }));
-for(let i=0; i<state.feed.pics.length; i++) {
-    formData.append('pic', state.feed.pics[i])
-}
+    const formData = new FormData();
+    formData.append('req', new Blob([JSON.stringify(params)], { type: 'application/json' }));
+    for(let i=0; i<state.feed.pics.length; i++) {
+        formData.append('pic', state.feed.pics[i])
+    }
 
-const res = await postFeed(formData);
-if(res.status === 200) {
-    const result = res.data.resultData;
+    const res = await postFeed(formData);
+    if(res.status === 200) {
+        const result = res.data.resultData;
 
-    const item = {
-        ...params,
-        feedId: result.feedId,
-        pics: result.pics,
-        writerUserId: authenticationStore.state.signedUser.userId,
-        writerNickName: authenticationStore.state.signedUser.nickName,
-        writerPic: authenticationStore.state.signedUser.pic,
-        createdAt: getCurrentTimestamp(),
-        isLike: 0,
-        likeCount: 0,
-        comments: {
-            moreComment: false,
-            commentList: []
-        }  
-    };
+        const item = {
+            ...params,
+            feedId: result.feedId,
+            pics: result.pics,
+            writerUserId: authenticationStore.state.signedUser.userId,
+            writerNickName: authenticationStore.state.signedUser.nickName,
+            writerPic: authenticationStore.state.signedUser.pic,
+            createdAt: getCurrentTimestamp(),
+            isLike: 0,
+            likeCount: 0,
+            comments: {
+                moreComment: false,
+                commentList: []
+            }  
+        };
 
-    console.log('item:', item);
+        console.log('item: ', item);
 
-    feedStore.addFeedUnshift(item)
-    initInputs();
-    modalCloseButton.value.click(); //모달창 닫기
-}
+        feedStore.addFeedUnshift(item);
+        initInputs();
+        modalCloseButton.value.click(); //모달창 닫기
+    }
 }
 
 const initInputs = () => {
-state.feed.contents = '';
-state.feed.location = '';
-state.feed.pics = [];
-state.previewPics = [];
+    state.feed.contents = '';
+    state.feed.location = '';
+    state.feed.pics = [];
+    state.previewPics = [];
 }
 
-const getCurrentTimestamp = () => {
-const today = new Date();
-
-const year = today.getFullYear();
-const month = ('0' + (today.getMonth() + 1)).slice(-2);
-const day = ('0' + today.getDate()).slice(-2);
-
-const hours = ('0' + today.getHours()).slice(-2); 
-const minutes = ('0' + today.getMinutes()).slice(-2);
-const seconds = ('0' + today.getSeconds()).slice(-2); 
-
-return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
 //메인 스크롤 방지 > 풀기 toggle
 watch(() => commentModalStore.state.showModal,(isShown) => {
     document.body.classList.toggle('no-scroll', isShown);
@@ -120,7 +108,7 @@ const { check: checkInfiniteScroll } = useInfiniteScroll(commentListContainer, (
     commentModalStore.doGetCommentList();
 });
 
-//댓글에서 스크롤이 내려간 상태에서 댓글을 쓰면 댓글 스크롤이 
+//댓글에서 스크롤이 내려간 상태에서 댓글을 쓰면 댓글 스크롤이 상단으로 이동
 watch(() => commentModalStore.state.commentList, async (newList) => {
     // newList의 첫번째 항목이 방금 사용자가 작성한 댓글인지 확인 (isSelf 속성으로 확인)
     if (newList.length > 0 && newList[0].isSelf) {
@@ -131,33 +119,35 @@ watch(() => commentModalStore.state.commentList, async (newList) => {
             commentListContainer.value.scrollTo({
                 top: 0,
                 behavior: 'smooth'
-            });            
+            });
         }
-         // isSelf 플래그는 일회성으로만 사용하는 것이 좋으므로, 확인 후 제거하거나 false로 변경
+        // isSelf 플래그는 일회성으로만 사용하는 것이 좋으므로, 확인 후 제거하거나 false로 변경
         // 여기서는 unshift로 추가된 새 댓글이므로, 다음 DOM 업데이트 사이클에서 isSelf를 false로 바꿔 오동작을 방지
         await nextTick();
         newList[0].isSelf = false;
     }
-     // 댓글 리스트 변경 후 (삭제 포함) 스크롤 상태를 다시 확인
+
+    // 댓글 리스트 변경 후 (삭제 포함) 스크롤 상태를 다시 확인
     await nextTick();
-    checkInfiniteScroll(); // 댓글 삭제를 하면 다음 페이지 호출
+    checkInfiniteScroll(); //댓글 삭제를 하면 다음 페이지 호출
 }, { deep: true }); //deep: true는 리스트 item의 값 변경까지도 watch하겠다는 의미
 </script>
 
-<template>
-<header-component />    
+<template>    
+    <HeaderComponent />
     <router-view />
     
     <b-modal v-model="messageModalStore.state.isShow" ok-only>{{ messageModalStore.state.message }}</b-modal>
 
-    <b-modal v-model="commentModalStore.state.showModal" size="lg" no-close-on-backdrop hide-footer modal-class="my-custom-modal" @close="commentModalStore.close">
+    <b-modal v-model="commentModalStore.state.showModal" size="lg" 
+            no-close-on-backdrop hide-footer 
+            modal-class="my-custom-modal" @close="commentModalStore.close">
         <div class="p-3 h100p d-flex flex-column comment-container">
             <div ref="commentListContainer" class="comment-list overflow-y-auto">
-                <feed-comment-card
-                    v-for="(item, idx) in commentModalStore.state.commentList"
+                <FeedCommentCard
+                    v-for="item in commentModalStore.state.commentList"
                     :key="item.feedCommentId"
-                    :item="item"
-                    @on-delete-comment="commentModalStore.doDeleteComment(item.feedCommentId, idx, item.feedId)" />
+                    :item="item" />
                 <div v-if="commentModalStore.state.isLoading" class="loading display-none">
                     <img :src="loadingImg" />
                 </div>
@@ -173,8 +163,7 @@ watch(() => commentModalStore.state.commentList, async (newList) => {
 
                 <button class="btn btn-outline-primary" @click="commentModalStore.doPostComment">
                     등록
-                </button>
-                
+                </button>                
             </div>
         </div>
         
@@ -203,6 +192,7 @@ watch(() => commentModalStore.state.commentList, async (newList) => {
         </div>                
     </div>
 
+
 </template>
 
 <style>
@@ -221,5 +211,4 @@ watch(() => commentModalStore.state.commentList, async (newList) => {
 .my-custom-modal .modal-body {    
     height: 80vh;
 }
-
 </style>
